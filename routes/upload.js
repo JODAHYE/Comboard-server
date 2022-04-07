@@ -15,9 +15,6 @@ const imgStorage = new CloudinaryStorage({
   cloudinary: v2,
   params: {
     folder: "Comboard",
-    // format: async (req, file) => "png", // supports promises as well
-    // format: 'mp4',
-    // resource_type: 'video',
     public_id: (req, file) => `${Date.now()}_${file.originalname}`,
   },
 });

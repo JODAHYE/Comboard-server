@@ -258,17 +258,6 @@ userRouter.get("/scrap/list", authMiddleware, async (req, res) => {
     console.log(err);
   }
 });
-userRouter.get("/scrap_count", async (req, res) => {
-  try {
-    Post.findById(req.query.postId).exec((err, post) => {
-      if (post) return res.status(200).json({ success: true, post });
-      else return res.status(200).json({ success: false });
-    });
-  } catch (err) {
-    console.log(err);
-  }
-});
-
 userRouter.get("/post_count", authMiddleware, async (req, res) => {
   try {
     Post.countDocuments({ writer: req.user.objectId }).exec((err, count) => {
