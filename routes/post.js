@@ -172,7 +172,7 @@ postRouter.patch("/dislike", authMiddleware, (req, res) => {
 postRouter.get("/user_list", (req, res) => {
   Post.find({ writer: req.query.userId })
     .skip(req.query.skip)
-    .limit(3)
+    .limit(10)
     .sort({ create_date: -1 })
     .exec((err, list) => {
       if (err) return console.log(err);
