@@ -18,7 +18,7 @@ commentRouter.post("/create", authMiddleware, (req, res) => {
         console.log(err);
         return res.status(500).json({ success: false, msg: `에러 ${err}` });
       }
-      Post.findByIdAndUpdate(req.body.postId, {
+      Post.findByIdAndUpdate(req.body.post, {
         $inc: {
           comments_count: 1,
         },
@@ -77,7 +77,7 @@ commentRouter.delete("/delete", authMiddleware, (req, res) => {
             },
           }).exec((err, post) => {
             if (err) {
-              onsole.log(err);
+              console.log(err);
               return res
                 .status(500)
                 .json({ success: false, msg: `에러 ${err}` });
@@ -137,7 +137,7 @@ commentRouter.post("/reply/create", authMiddleware, async (req, res) => {
       }).exec((err, comment) => {
         if (err) console.log(err);
       });
-      Post.findByIdAndUpdate(req.body.postId, {
+      Post.findByIdAndUpdate(req.body.post, {
         $inc: {
           comments_count: 1,
         },
