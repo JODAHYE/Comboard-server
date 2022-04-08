@@ -52,6 +52,19 @@ commentRouter.get("/list", (req, res) => {
       });
     });
 });
+commentRouter.get("/reply/list", (req, res) => {
+  Comment.find({ reply_comment: req.query.parentCommentId })
+    .sort({ create_date: 1 })
+    .exec((err, list) => {
+      if (err) {
+        return res.status(500).json({ success: false, msg: err });
+      }
+      return res.status(200).json({
+        success: true,
+        commentList: list,
+      });
+    });
+});
 commentRouter.delete("/delete", authMiddleware, (req, res) => {
   try {
     Comment.findByIdAndDelete(req.query.commentId).exec(() => {
