@@ -30,6 +30,7 @@ commentRouter.post("/create", authMiddleware, (req, res) => {
         return res.status(201).json({
           success: true,
           msg: "댓글생성",
+          comment: comment,
           comments_count: post.comments_count,
         });
       });
@@ -149,6 +150,7 @@ commentRouter.post("/reply/create", authMiddleware, async (req, res) => {
         return res.status(201).json({
           success: true,
           msg: "댓글생성",
+          comment: comment,
           comments_count: post.comments_count,
         });
       });
