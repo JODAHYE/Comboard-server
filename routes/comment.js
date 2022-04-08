@@ -8,7 +8,7 @@ commentRouter.post("/create", authMiddleware, (req, res) => {
     const newComment = new Comment({
       writer: req.user.objectId,
       post: req.body.post,
-      writer_name: req.body.nickname,
+      writer_name: req.body.writer_name,
       content: req.body.content,
       create_date: req.body.createDate,
       childComment: [],
@@ -120,7 +120,7 @@ commentRouter.post("/reply/create", authMiddleware, async (req, res) => {
     const newReply = new Comment({
       writer: req.user.objectId,
       post: req.body.post,
-      writer_name: req.body.nickname,
+      writer_name: req.body.writer_name,
       content: req.body.content,
       create_date: req.body.createDate,
       reply_user: req.body.reply_user,
