@@ -67,10 +67,6 @@ userRouter.post("/login", (req, res) => {
             .status(200)
             .json({ success: false, msg: "비밀번호가 일치하지 않습니다." });
         }
-        // const refreshToken = jwt.sign({}, process.env.SECRET_KEY, {
-        //   expiresIn: "14d",
-        //   algorithm: "HS256",
-        // });
         const accessToken = jwt.sign(
           { email: user.email },
           process.env.SECRET_KEY,
@@ -84,17 +80,6 @@ userRouter.post("/login", (req, res) => {
           accessToken: accessToken,
           msg: "로그인 성공",
         });
-        // User.findOneAndUpdate({ email: req.body.email }, { refreshToken }).exec(
-        //   (err, user) => {
-        //     if (err) return res.status(500).json({ success: false, msg: err });
-        //     return res.status(200).json({
-        //       success: true,
-        //       refreshToken: refreshToken,
-        //       accessToken: accessToken,
-        //       msg: "로그인 성공",
-        //     });
-        //   }
-        // );
       });
     });
   } catch (err) {
@@ -163,18 +148,6 @@ userRouter.post("/kakaologin", async (req, res) => {
     });
   });
 });
-userRouter.post("/kakaologout", (req, res) => {
-  axios
-    .post("https://kapi.kakao.com/v1/user/unlink", null, {
-      headers: {
-        Authorization: `Bearer ${req.body.kakaoToken}`,
-      },
-    })
-    .then((res) => {
-      console.log(res);
-    });
-  return res.status(200).json({ success: true, msg: "로그아웃" });
-});
 
 userRouter.get("/auth", authMiddleware, (req, res) => {
   return res.status(200).json({
@@ -192,6 +165,14 @@ userRouter.get("/auth", authMiddleware, (req, res) => {
 });
 userRouter.get("/logout", authMiddleware, (req, res) => {
   try {
+    console.log(req.query.kakaoAccessToken);
+    if (req.query.kakaoAccessToken) {
+      axios.post("https://kapi.kakao.com/v1/user/unlink", null, {
+        headers: {
+          Authorization: `Bearer ${req.body.kakaoAccessToken}`,
+        },
+      });
+    }
     return res.status(200).json({ success: true, msg: "로그아웃" });
   } catch (err) {
     console.log("로그아웃 에러: ", err);
