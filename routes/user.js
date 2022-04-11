@@ -192,9 +192,7 @@ userRouter.get("/auth", authMiddleware, (req, res) => {
 });
 userRouter.get("/logout", authMiddleware, (req, res) => {
   try {
-    User.findByIdAndUpdate(req.user.objectId, { refreshToken: "" }).exec(() => {
-      return res.status(200).json({ success: true, msg: "로그아웃" });
-    });
+    return res.status(200).json({ success: true, msg: "로그아웃" });
   } catch (err) {
     console.log("로그아웃 에러: ", err);
     return res
