@@ -12,6 +12,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "axios": "^0.26.1",
     "bcrypt": "^5.0.1",
     "cloudinary": "^1.28.1",
     "cookie-parser": "^1.4.6",
@@ -24,6 +25,7 @@
     "multer": "^1.4.4",
     "multer-storage-cloudinary": "^4.0.0",
     "nodemon": "^2.0.15",
+    "qs": "^6.10.3",
     "universal-cookie": "^4.0.4"
   }
 }

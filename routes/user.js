@@ -6,6 +6,8 @@ import authMiddleware from "../middleware/auth.js";
 import Post from "../models/Post.js";
 import Board from "../models/Board.js";
 import Comment from "../models/Comment.js";
+import axios from "axios";
+import qs from "qs";
 const userRouter = express.Router();
 const saltRounds = 10;
 userRouter.post("/signup", (req, res) => {
@@ -101,6 +103,79 @@ userRouter.post("/login", (req, res) => {
       .json({ success: false, msg: `${err} 올바른 접근이 아닙니다.` });
   }
 });
+userRouter.post("/kakaologin", async (req, res) => {
+  const param = qs.stringify({
+    grant_type: "authorization_code",
+    client_id: process.env.REST_API_KEY,
+    redirect_uri: process.env.REDIRECT_URL,
+    code: req.body.code,
+    client_secret: process.env.CLIENT_SECRET,
+  });
+  const kakaoTokenResponse = await axios.post(
+    "https://kauth.kakao.com/oauth/token",
+    param
+  );
+  const kakaoAccessToken = await kakaoTokenResponse.data.access_token;
+  // db에 사용자가 없을 경우 (email로 찾음) 저장하고 아니면 새 토큰 발행하기
+  const kakaoUserInfoResponse = await axios.get(
+    "https://kapi.kakao.com/v2/user/me",
+    {
+      headers: {
+        Authorization: `Bearer ${kakaoAccessToken}`,
+      },
+    }
+  );
+  const kakaoUserInfo = await kakaoUserInfoResponse.data;
+  const customEmail = kakaoUserInfo.id + "@kakaouser.com";
+  User.findOne({ email: customEmail }).exec((err, user) => {
+    if (err) return res.status(500).json({ success: false, err });
+    if (!user) {
+      bcrypt.genSalt(saltRounds, (err, salt) => {
+        bcrypt.hash(kakaoUserInfo.id, salt, (err, hash) => {
+          const newUser = new User({
+            email: customEmail,
+            nickname: kakaoUserInfo.properties.nickname,
+            password: hash,
+          });
+          newUser.save((err, user) => {
+            if (err) {
+              return res.status(500).json({ success: false, msg: err });
+            }
+          });
+        });
+      });
+    }
+    // 토큰 발급
+    const accessToken = jwt.sign(
+      { email: customEmail },
+      process.env.SECRET_KEY,
+      {
+        algorithm: "HS256",
+        expiresIn: "2h",
+      }
+    );
+    return res.status(200).json({
+      success: true,
+      kakaoAccessToken,
+      accessToken,
+      kakaoUserInfo,
+      msg: "로그인 성공",
+    });
+  });
+});
+userRouter.post("/kakaologout", (req, res) => {
+  axios
+    .post("https://kapi.kakao.com/v1/user/unlink", null, {
+      headers: {
+        Authorization: `Bearer ${req.body.kakaoToken}`,
+      },
+    })
+    .then((res) => {
+      console.log(res);
+    });
+  return res.status(200).json({ success: true, msg: "로그아웃" });
+});
+
 userRouter.get("/auth", authMiddleware, (req, res) => {
   return res.status(200).json({
     isAuth: true,
