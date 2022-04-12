@@ -16,8 +16,15 @@ boardRouter.post("/create", authMiddleware, (req, res) => {
           .status(200)
           .json({ success: false, msg: "이미 존재하는 게시판입니다" });
       } else {
-        const { master, title, description, bgimg, access, secretNumber } =
-          req.body;
+        const {
+          master,
+          title,
+          description,
+          bgimg,
+          access,
+          secretNumber,
+          creatDate,
+        } = req.body;
         const newBoard = new Board({
           master,
           title,
@@ -25,7 +32,7 @@ boardRouter.post("/create", authMiddleware, (req, res) => {
           bgimg,
           access,
           secretNumber,
-          create_date: moment(new Date()).format("YYYYMMDDHHmmss"),
+          create_date: creatDate,
         });
         newBoard.save((err, board) => {
           if (err) {
