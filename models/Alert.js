@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+
 const alertSchema = new mongoose.Schema({
   user: {
     type: mongoose.Schema.Types.ObjectId,

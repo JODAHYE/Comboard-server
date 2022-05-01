@@ -1,15 +1,18 @@
 import express from "express";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
+import axios from "axios";
+import qs from "qs";
 import User from "../models/User.js";
 import authMiddleware from "../middleware/auth.js";
 import Post from "../models/Post.js";
 import Board from "../models/Board.js";
 import Comment from "../models/Comment.js";
-import axios from "axios";
-import qs from "qs";
+
 const userRouter = express.Router();
+
 const saltRounds = 10;
+
 userRouter.post("/signup", (req, res) => {
   try {
     User.findOne({ email: req.body.email }).exec((err, user) => {
@@ -47,6 +50,7 @@ userRouter.post("/signup", (req, res) => {
       .json({ success: false, msg: `${err} 올바른 입력이 아닙니다.` });
   }
 });
+
 userRouter.post("/login", (req, res) => {
   try {
     User.findOne({ email: req.body.email }).exec((err, user) => {
@@ -88,6 +92,7 @@ userRouter.post("/login", (req, res) => {
       .json({ success: false, msg: `${err} 올바른 접근이 아닙니다.` });
   }
 });
+
 userRouter.post("/kakaologin", async (req, res) => {
   const param = qs.stringify({
     grant_type: "authorization_code",
@@ -101,7 +106,6 @@ userRouter.post("/kakaologin", async (req, res) => {
     param
   );
   const kakaoAccessToken = await kakaoTokenResponse.data.access_token;
-  // db에 사용자가 없을 경우 (email로 찾음) 저장하고 아니면 새 토큰 발행하기
   const kakaoUserInfoResponse = await axios.get(
     "https://kapi.kakao.com/v2/user/me",
     {
@@ -130,7 +134,6 @@ userRouter.post("/kakaologin", async (req, res) => {
         });
       });
     }
-    // 토큰 발급
     const accessToken = jwt.sign(
       { email: customEmail },
       process.env.SECRET_KEY,
@@ -163,6 +166,7 @@ userRouter.get("/auth", authMiddleware, (req, res) => {
     postLock: req.user.postLock,
   });
 });
+
 userRouter.get("/logout", authMiddleware, (req, res) => {
   try {
     console.log(req.query.kakaoAccessToken);
@@ -175,12 +179,12 @@ userRouter.get("/logout", authMiddleware, (req, res) => {
     }
     return res.status(200).json({ success: true, msg: "로그아웃" });
   } catch (err) {
-    console.log("로그아웃 에러: ", err);
     return res
       .status(500)
       .json({ success: false, msg: `${err} 올바른 접근이 아닙니다.` });
   }
 });
+
 userRouter.get("/board/created_list", authMiddleware, async (req, res) => {
   try {
     Board.find({ master: req.user.objectId })
@@ -191,9 +195,10 @@ userRouter.get("/board/created_list", authMiddleware, async (req, res) => {
         else return res.status(200).json({ success: true, list });
       });
   } catch (err) {
-    console.log(err);
+    return res.status(500).json({ success: false, msg: `에러 ${err}` });
   }
 });
+
 userRouter.patch("/bookmark/add", authMiddleware, (req, res) => {
   try {
     User.findByIdAndUpdate(req.user.objectId, {
@@ -202,7 +207,7 @@ userRouter.patch("/bookmark/add", authMiddleware, (req, res) => {
       },
     }).exec((err, user) => {
       if (err) {
-        return console.log(err);
+        return res.status(500).json({ success: false, msg: `에러 ${err}` });
       }
       return res.status(201).json({
         success: true,
@@ -210,9 +215,10 @@ userRouter.patch("/bookmark/add", authMiddleware, (req, res) => {
       });
     });
   } catch (err) {
-    return console.log(err);
+    return res.status(500).json({ success: false, msg: `에러 ${err}` });
   }
 });
+
 userRouter.patch("/bookmark/delete", authMiddleware, (req, res) => {
   try {
     User.findByIdAndUpdate(req.user.objectId, {
@@ -221,7 +227,7 @@ userRouter.patch("/bookmark/delete", authMiddleware, (req, res) => {
       },
     }).exec((err, user) => {
       if (err) {
-        return console.log(err);
+        return res.status(500).json({ success: false, msg: `에러 ${err}` });
       }
       return res.status(201).json({
         success: true,
@@ -229,7 +235,7 @@ userRouter.patch("/bookmark/delete", authMiddleware, (req, res) => {
       });
     });
   } catch (err) {
-    return console.log(err);
+    return res.status(500).json({ success: false, msg: `에러 ${err}` });
   }
 });
 
@@ -239,11 +245,13 @@ userRouter.get("/bookmark/list", authMiddleware, async (req, res) => {
       .populate("bookmark")
       .exec((err, user) => {
         if (err) {
-          console.log(err);
+          return res.status(500).json({ success: false, msg: `에러 ${err}` });
         }
         return res.status(200).json({ bookmarkBoardList: user.bookmark });
       });
-  } catch (err) {}
+  } catch (err) {
+    return res.status(500).json({ success: false, msg: `에러 ${err}` });
+  }
 });
 
 userRouter.patch("/scrap/add", authMiddleware, async (req, res) => {
@@ -252,30 +260,31 @@ userRouter.patch("/scrap/add", authMiddleware, async (req, res) => {
       $push: { scrap_post: req.body.postId },
     }).exec((err, user) => {
       if (err) {
-        return console.log(err);
+        return res.status(500).json({ success: false, msg: `에러 ${err}` });
       }
       return res
         .status(201)
         .json({ success: true, msg: "게시글 스크랩", user });
     });
   } catch (err) {
-    console.log(err);
+    return res.status(500).json({ success: false, msg: `에러 ${err}` });
   }
 });
+
 userRouter.patch("/scrap/delete", authMiddleware, async (req, res) => {
   try {
     User.findByIdAndUpdate(req.user.objectId, {
       $pull: { scrap_post: req.body.postId },
     }).exec((err, user) => {
       if (err) {
-        return console.log(err);
+        return res.status(500).json({ success: false, msg: `에러 ${err}` });
       }
       return res
         .status(201)
         .json({ success: true, msg: "게시글 스크랩 해제", user });
     });
   } catch (err) {
-    console.log(err);
+    return res.status(500).json({ success: false, msg: `에러 ${err}` });
   }
 });
 
@@ -287,13 +296,15 @@ userRouter.get("/post/list", authMiddleware, async (req, res) => {
       .limit(18)
       .skip(skip)
       .exec((err, list) => {
-        if (err) return console.log(err);
+        if (err)
+          return res.status(500).json({ success: false, msg: `에러 ${err}` });
         return res.status(200).json({ success: true, postList: list });
       });
   } catch (err) {
-    console.log(err);
+    return res.status(500).json({ success: false, msg: `에러 ${err}` });
   }
 });
+
 userRouter.get("/scrap/list", authMiddleware, async (req, res) => {
   try {
     const skip = parseInt(req.query.skip);
@@ -303,25 +314,27 @@ userRouter.get("/scrap/list", authMiddleware, async (req, res) => {
         options: { limit: 18, sort: { create_date: -1 }, skip: skip },
       })
       .exec((err, user) => {
-        if (err) return console.log(err);
+        if (err)
+          return res.status(500).json({ success: false, msg: `에러 ${err}` });
         return res
           .status(200)
           .json({ success: true, postList: user.scrap_post });
       });
   } catch (err) {
-    console.log(err);
+    return res.status(500).json({ success: false, msg: `에러 ${err}` });
   }
 });
+
 userRouter.get("/post_count", authMiddleware, async (req, res) => {
   try {
     Post.countDocuments({ writer: req.user.objectId }).exec((err, count) => {
       if (err) {
-        return console.log(err);
+        return res.status(500).json({ success: false, msg: `에러 ${err}` });
       }
       return res.status(200).json({ success: true, postCount: count });
     });
   } catch (err) {
-    console.log(err);
+    return res.status(500).json({ success: false, msg: `에러 ${err}` });
   }
 });
 
@@ -338,64 +351,90 @@ userRouter.get("/comment/list", authMiddleware, async (req, res) => {
         return res.status(200).json({ success: true, list });
       });
   } catch (err) {
-    console.log(err);
+    return res.status(500).json({ success: false, msg: `에러 ${err}` });
   }
 });
+
 userRouter.get("/comment_count", authMiddleware, async (req, res) => {
-  Comment.countDocuments({ writer: req.user.objectId }).exec((err, count) => {
-    if (err) {
-      return console.log(err);
-    }
-    return res.status(200).json({ success: true, CommentCount: count });
-  });
+  try {
+    Comment.countDocuments({ writer: req.user.objectId }).exec((err, count) => {
+      if (err) {
+        return res.status(500).json({ success: false, msg: `에러 ${err}` });
+      }
+      return res.status(200).json({ success: true, CommentCount: count });
+    });
+  } catch (err) {
+    return res.status(500).json({ success: false, msg: `에러 ${err}` });
+  }
 });
+
 userRouter.patch("/update/image", authMiddleware, (req, res) => {
-  User.findByIdAndUpdate(req.user.objectId, {
-    profileImage: req.body.imgUrl,
-  }).exec((err, user) => {
-    if (err) {
-      return console.log(err);
-    }
-    return res
-      .status(201)
-      .json({ success: true, profileImage: user.profileImage });
-  });
+  try {
+    User.findByIdAndUpdate(req.user.objectId, {
+      profileImage: req.body.imgUrl,
+    }).exec((err, user) => {
+      if (err) {
+        return res.status(500).json({ success: false, msg: `에러 ${err}` });
+      }
+      return res
+        .status(201)
+        .json({ success: true, profileImage: user.profileImage });
+    });
+  } catch (err) {
+    return res.status(500).json({ success: false, msg: `에러 ${err}` });
+  }
 });
+
 userRouter.patch("/update/nickname", authMiddleware, (req, res) => {
-  User.findByIdAndUpdate(req.user.objectId, {
-    nickname: req.body.nickname,
-  }).exec((err, user) => {
-    if (err) {
-      return console.log(err);
-    }
-    return res.status(201).json({ success: true, nickname: user.nickname });
-  });
+  try {
+    User.findByIdAndUpdate(req.user.objectId, {
+      nickname: req.body.nickname,
+    }).exec((err, user) => {
+      if (err) {
+        return res.status(500).json({ success: false, msg: `에러 ${err}` });
+      }
+      return res.status(201).json({ success: true, nickname: user.nickname });
+    });
+  } catch (err) {
+    return res.status(500).json({ success: false, msg: `에러 ${err}` });
+  }
 });
+
 userRouter.patch("/update/post_lock", authMiddleware, (req, res) => {
-  User.findByIdAndUpdate(req.user.objectId, {
-    postLock: req.body.value,
-  }).exec((err, user) => {
-    if (err) {
-      return console.log(err);
-    }
-    return res.status(201).json({ success: true, postLock: user.postLock });
-  });
-});
-userRouter.get("/detail", (req, res) => {
-  User.findById(req.query.userId).exec((err, user) => {
-    Post.countDocuments({ writer: user._id }).exec((err, count) => {
+  try {
+    User.findByIdAndUpdate(req.user.objectId, {
+      postLock: req.body.value,
+    }).exec((err, user) => {
       if (err) {
         return console.log(err);
       }
-      return res.status(200).json({
-        success: true,
-        nickname: user.nickname,
-        profileImage: user.profileImage,
-        signupDate: user.signup_date,
-        count,
-        postLock: user.postLock,
+      return res.status(201).json({ success: true, postLock: user.postLock });
+    });
+  } catch (err) {
+    return res.status(500).json({ success: false, msg: `에러 ${err}` });
+  }
+});
+
+userRouter.get("/detail", (req, res) => {
+  try {
+    User.findById(req.query.userId).exec((err, user) => {
+      Post.countDocuments({ writer: user._id }).exec((err, count) => {
+        if (err) {
+          return console.log(err);
+        }
+        return res.status(200).json({
+          success: true,
+          nickname: user.nickname,
+          profileImage: user.profileImage,
+          signupDate: user.signup_date,
+          count,
+          postLock: user.postLock,
+        });
       });
     });
-  });
+  } catch (err) {
+    return res.status(500).json({ success: false, msg: `에러 ${err}` });
+  }
 });
+
 export default userRouter;

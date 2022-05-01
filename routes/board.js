@@ -1,8 +1,8 @@
 import express from "express";
 import Board from "../models/Board.js";
 import authMiddleware from "../middleware/auth.js";
-import moment from "moment";
 import Post from "../models/Post.js";
+
 const boardRouter = express.Router();
 
 boardRouter.post("/create", authMiddleware, (req, res) => {
@@ -48,9 +48,10 @@ boardRouter.post("/create", authMiddleware, (req, res) => {
       }
     });
   } catch (err) {
-    console.log(err);
+    return res.status(500).json({ success: false, msg: `에러 ${err}` });
   }
 });
+
 boardRouter.post("/update", authMiddleware, (req, res) => {
   try {
     Board.findOne({ title: req.body.title }).exec((err, board) => {
@@ -85,7 +86,7 @@ boardRouter.post("/update", authMiddleware, (req, res) => {
       }
     });
   } catch (err) {
-    console.log(err);
+    return res.status(500).json({ success: false, msg: `에러 ${err}` });
   }
 });
 
@@ -111,7 +112,7 @@ boardRouter.get("/list", (req, res) => {
         });
     }
   } catch (err) {
-    console.log(err);
+    return res.status(500).json({ success: false, msg: `에러 ${err}` });
   }
 });
 
@@ -129,7 +130,7 @@ boardRouter.get("/:id", (req, res) => {
       }
     });
   } catch (err) {
-    console.log(err);
+    return res.status(500).json({ success: false, msg: `에러 ${err}` });
   }
 });
 
@@ -150,10 +151,10 @@ boardRouter.get("/:id/list", (req, res) => {
         });
       });
   } catch (err) {
-    console.log(err);
     return res.status(500).json({ success: false, msg: `에러 ${err}` });
   }
 });
+
 boardRouter.delete("/delete", authMiddleware, (req, res) => {
   try {
     Board.findOneAndRemove({
@@ -161,13 +162,12 @@ boardRouter.delete("/delete", authMiddleware, (req, res) => {
       _id: req.query.boardId,
     }).exec((err, board) => {
       if (err) {
-        console.log(err);
         return res.status(500).json({ success: false, msg: `에러 ${err}` });
       }
       return res.status(200).json({ success: true, msg: "게시판 삭제" });
     });
   } catch (err) {
-    console.log(err);
+    return res.status(500).json({ success: false, msg: `에러 ${err}` });
   }
 });
 

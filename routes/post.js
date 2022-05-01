@@ -1,10 +1,11 @@
 import express from "express";
+import moment from "moment";
 import authMiddleware from "../middleware/auth.js";
 import Post from "../models/Post.js";
 import Comment from "../models/Comment.js";
 import User from "../models/User.js";
 import Board from "../models/Board.js";
-import moment from "moment";
+
 const postRouter = express.Router();
 
 postRouter.post("/create", authMiddleware, (req, res) => {
@@ -32,6 +33,7 @@ postRouter.post("/create", authMiddleware, (req, res) => {
     return res.status(500).json({ success: false, msg: `에러 ${err}` });
   }
 });
+
 postRouter.patch("/update", authMiddleware, (req, res) => {
   try {
     Post.findByIdAndUpdate(req.query.postId, req.body).exec((err, post) => {
@@ -49,6 +51,7 @@ postRouter.patch("/update", authMiddleware, (req, res) => {
     return res.status(500).json({ success: false, msg: `에러 ${err}` });
   }
 });
+
 postRouter.delete("/delete", authMiddleware, async (req, res) => {
   try {
     Post.findByIdAndDelete(req.query.postId).exec(() => {
@@ -58,7 +61,6 @@ postRouter.delete("/delete", authMiddleware, async (req, res) => {
         },
       }).exec(() => {
         Comment.deleteMany({ post: req.query.postId }).exec((err, result) => {
-          //댓글도 삭제
           if (err) {
             console.log(err);
             return res.status(500).json({ success: false, msg: err });
@@ -74,6 +76,7 @@ postRouter.delete("/delete", authMiddleware, async (req, res) => {
     return res.status(500).json({ success: false, msg: `에러 ${err}` });
   }
 });
+
 postRouter.get("/get", (req, res) => {
   try {
     Post.findById(req.query.postId).exec((err, post) => {
@@ -95,16 +98,15 @@ postRouter.get("/get", (req, res) => {
       }
     });
   } catch (err) {
-    console.log(err);
     return res.status(500).json({ success: false, msg: `에러 ${err}` });
   }
 });
+
 postRouter.patch("/increase/view", (req, res) => {
   try {
     Post.findByIdAndUpdate(req.body.postId, { $inc: { hits: 1 } }).exec(
       (err, post) => {
         if (err) {
-          console.log(err);
           return res.status(500).json({ success: false, msg: err });
         }
         return res.status(200).json({
@@ -114,10 +116,10 @@ postRouter.patch("/increase/view", (req, res) => {
       }
     );
   } catch (err) {
-    console.log(err);
     return res.status(500).json({ success: false, msg: `에러 ${err}` });
   }
 });
+
 postRouter.patch("/like", authMiddleware, (req, res) => {
   try {
     User.findByIdAndUpdate(req.user.objectId, {
@@ -140,7 +142,7 @@ postRouter.patch("/like", authMiddleware, (req, res) => {
       );
     });
   } catch (err) {
-    return console.log(err);
+    return res.status(500).json({ success: false, msg: `에러 ${err}` });
   }
 });
 
@@ -166,24 +168,30 @@ postRouter.patch("/dislike", authMiddleware, (req, res) => {
       });
     });
   } catch (err) {
-    return console.log(err);
+    return res.status(500).json({ success: false, msg: `에러 ${err}` });
   }
 });
+
 postRouter.get("/user_list", (req, res) => {
-  Post.find({ writer: req.query.userId })
-    .skip(req.query.skip)
-    .limit(10)
-    .sort({ create_date: -1 })
-    .exec((err, list) => {
-      if (err) return console.log(err);
-      if (list && list.length > 0) {
-        return res.status(200).json({ success: true, postList: list });
-      }
-      if (!list || list.length === 0) {
-        return res
-          .status(200)
-          .json({ success: false, msg: "게시글이 없습니다." });
-      }
-    });
+  try {
+    Post.find({ writer: req.query.userId })
+      .skip(req.query.skip)
+      .limit(10)
+      .sort({ create_date: -1 })
+      .exec((err, list) => {
+        if (err) return console.log(err);
+        if (list && list.length > 0) {
+          return res.status(200).json({ success: true, postList: list });
+        }
+        if (!list || list.length === 0) {
+          return res
+            .status(200)
+            .json({ success: false, msg: "게시글이 없습니다." });
+        }
+      });
+  } catch (err) {
+    return res.status(500).json({ success: false, msg: `에러 ${err}` });
+  }
 });
+
 export default postRouter;

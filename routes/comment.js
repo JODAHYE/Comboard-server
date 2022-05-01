@@ -2,7 +2,9 @@ import express from "express";
 import authMiddleware from "../middleware/auth.js";
 import Comment from "../models/Comment.js";
 import Post from "../models/Post.js";
+
 const commentRouter = express.Router();
+
 commentRouter.post("/create", authMiddleware, (req, res) => {
   try {
     const newComment = new Comment({
@@ -24,7 +26,6 @@ commentRouter.post("/create", authMiddleware, (req, res) => {
         },
       }).exec((err, post) => {
         if (err) {
-          console.log(err);
           return res.status(500).json({ success: false, msg: `에러 ${err}` });
         }
         return res.status(201).json({
@@ -36,36 +37,47 @@ commentRouter.post("/create", authMiddleware, (req, res) => {
       });
     });
   } catch (err) {
-    console.log(err);
+    return res.status(500).json({ success: false, msg: `에러 ${err}` });
   }
 });
+
 commentRouter.get("/list", (req, res) => {
-  Comment.find({ post: req.query.postId })
-    .populate("childComment")
-    .sort({ create_date: 1 })
-    .exec((err, list) => {
-      if (err) {
-        return res.status(500).json({ success: false, msg: err });
-      }
-      return res.status(200).json({
-        success: true,
-        commentList: list,
+  try {
+    Comment.find({ post: req.query.postId })
+      .populate("childComment")
+      .sort({ create_date: 1 })
+      .exec((err, list) => {
+        if (err) {
+          return res.status(500).json({ success: false, msg: err });
+        }
+        return res.status(200).json({
+          success: true,
+          commentList: list,
+        });
       });
-    });
+  } catch (err) {
+    return res.status(500).json({ success: false, msg: `에러 ${err}` });
+  }
 });
+
 commentRouter.get("/reply/list", (req, res) => {
-  Comment.find({ reply_comment: req.query.parentCommentId })
-    .sort({ create_date: 1 })
-    .exec((err, list) => {
-      if (err) {
-        return res.status(500).json({ success: false, msg: err });
-      }
-      return res.status(200).json({
-        success: true,
-        commentList: list,
+  try {
+    Comment.find({ reply_comment: req.query.parentCommentId })
+      .sort({ create_date: 1 })
+      .exec((err, list) => {
+        if (err) {
+          return res.status(500).json({ success: false, msg: err });
+        }
+        return res.status(200).json({
+          success: true,
+          commentList: list,
+        });
       });
-    });
+  } catch (err) {
+    return res.status(500).json({ success: false, msg: `에러 ${err}` });
+  }
 });
+
 commentRouter.delete("/delete", authMiddleware, (req, res) => {
   try {
     Comment.findByIdAndDelete(req.query.commentId).exec(() => {
@@ -74,7 +86,7 @@ commentRouter.delete("/delete", authMiddleware, (req, res) => {
           if (err) return console.log(err);
           Post.findByIdAndUpdate(req.query.postId, {
             $inc: {
-              comments_count: parseInt(`-${result.deletedCount}`) - 1, // 답글 도 같이 삭제
+              comments_count: parseInt(`-${result.deletedCount}`) - 1,
             },
           }).exec((err, post) => {
             if (err) {
@@ -93,9 +105,10 @@ commentRouter.delete("/delete", authMiddleware, (req, res) => {
       );
     });
   } catch (err) {
-    console.log(err);
+    return res.status(500).json({ success: false, msg: `에러 ${err}` });
   }
 });
+
 commentRouter.patch("/update", authMiddleware, (req, res) => {
   try {
     Comment.findByIdAndUpdate(req.body.commentId, {
@@ -112,9 +125,10 @@ commentRouter.patch("/update", authMiddleware, (req, res) => {
       });
     });
   } catch (err) {
-    console.log(err);
+    return res.status(500).json({ success: false, msg: `에러 ${err}` });
   }
 });
+
 commentRouter.post("/reply/create", authMiddleware, async (req, res) => {
   try {
     const newReply = new Comment({
@@ -127,7 +141,6 @@ commentRouter.post("/reply/create", authMiddleware, async (req, res) => {
       reply_name: req.body.reply_name,
       reply_comment: req.body.reply_comment,
     });
-
     await newReply.save((err, comment) => {
       if (err) {
         console.log(err);
@@ -155,7 +168,9 @@ commentRouter.post("/reply/create", authMiddleware, async (req, res) => {
         });
       });
     });
-  } catch (err) {}
+  } catch (err) {
+    return res.status(500).json({ success: false, msg: `에러 ${err}` });
+  }
 });
 
 export default commentRouter;

@@ -1,5 +1,6 @@
 import jwt from "jsonwebtoken";
 import User from "../models/User.js";
+
 const authMiddleware = (req, res, next) => {
   try {
     if (!req.headers.authorization) {
@@ -34,10 +35,10 @@ const authMiddleware = (req, res, next) => {
       }
     );
   } catch (err) {
-    console.log("에러", err);
     return res
       .status(500)
       .json({ success: false, isAuth: false, msg: `에러 ${err}` });
   }
 };
+
 export default authMiddleware;

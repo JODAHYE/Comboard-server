@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+
 const commentSchema = new mongoose.Schema({
   writer: {
     type: mongoose.Schema.Types.ObjectId,
@@ -33,5 +34,6 @@ const commentSchema = new mongoose.Schema({
   },
   childComment: [{ type: mongoose.Schema.Types.ObjectId, ref: "Comment" }],
 });
+
 const Comment = mongoose.model("Comment", commentSchema);
 export default Comment;
