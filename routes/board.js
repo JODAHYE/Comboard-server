@@ -134,27 +134,6 @@ boardRouter.get("/:id", (req, res) => {
   }
 });
 
-boardRouter.get("/:id/list", (req, res) => {
-  try {
-    Post.find({ board: req.query.boardId })
-      .limit(22)
-      .skip(req.query.skip)
-      .sort({ [req.query.sort]: -1 })
-      .exec((err, postList) => {
-        if (err) {
-          console.log(err);
-          return res.status(500).json({ success: false, msg: err });
-        }
-        return res.status(200).json({
-          success: true,
-          postList,
-        });
-      });
-  } catch (err) {
-    return res.status(500).json({ success: false, msg: `에러 ${err}` });
-  }
-});
-
 boardRouter.delete("/delete", authMiddleware, (req, res) => {
   try {
     Board.findOneAndRemove({

@@ -173,7 +173,7 @@ userRouter.get("/logout", authMiddleware, (req, res) => {
     if (req.query.kakaoAccessToken) {
       axios.post("https://kapi.kakao.com/v1/user/unlink", null, {
         headers: {
-          Authorization: `Bearer ${req.body.kakaoAccessToken}`,
+          Authorization: `Bearer ${req.query.kakaoAccessToken}`,
         },
       });
     }

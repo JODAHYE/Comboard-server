@@ -8,6 +8,27 @@ import Board from "../models/Board.js";
 
 const postRouter = express.Router();
 
+postRouter.get("/list", (req, res) => {
+  try {
+    Post.find({ board: req.query.boardId })
+      .limit(22)
+      .skip(req.query.skip)
+      .sort({ [req.query.sort]: -1 })
+      .exec((err, postList) => {
+        if (err) {
+          console.log(err);
+          return res.status(500).json({ success: false, msg: err });
+        }
+        return res.status(200).json({
+          success: true,
+          postList,
+        });
+      });
+  } catch (err) {
+    return res.status(500).json({ success: false, msg: `에러 ${err}` });
+  }
+});
+
 postRouter.post("/create", authMiddleware, (req, res) => {
   try {
     const newPost = new Post(req.body);
