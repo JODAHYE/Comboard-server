@@ -90,6 +90,20 @@ boardRouter.post("/update", authMiddleware, (req, res) => {
   }
 });
 
+boardRouter.get("/search", (req, res) => {
+  try {
+    Board.findOne({ access: req.query.access, title: req.query.title }).exec(
+      (err, board) => {
+        if (err)
+          return res.status(500).json({ success: false, msg: `에러 ${err}` });
+        else return res.status(200).json({ success: true, board });
+      }
+    );
+  } catch (err) {
+    console.log(err);
+  }
+});
+
 boardRouter.get("/list", (req, res) => {
   try {
     if (req.query.access === "private") {
