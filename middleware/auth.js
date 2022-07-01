@@ -3,13 +3,13 @@ import User from "../models/User.js";
 
 const authMiddleware = (req, res, next) => {
   try {
-    if (!req.headers.authorization) {
+    if (!req.cookies.accessToken) {
       return res
         .status(403)
         .json({ success: false, isAuth: false, msg: "토큰이 존재하지 않음" });
     }
     jwt.verify(
-      req.headers.authorization,
+      req.cookies.accessToken,
       process.env.SECRET_KEY,
       (err, decoded) => {
         User.findOne({ email: decoded.email }, (err, user) => {

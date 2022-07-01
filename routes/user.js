@@ -79,11 +79,17 @@ userRouter.post("/login", (req, res) => {
             expiresIn: "2h",
           }
         );
-        return res.status(200).json({
-          success: true,
-          accessToken: accessToken,
-          msg: "로그인 성공",
-        });
+        return res
+          .status(200)
+          .cookie("accessToken", accessToken, {
+            maxAge: 2 * 60 * 60 * 1000,
+            httpOnly: true,
+          })
+          .json({
+            success: true,
+            msg: "로그인 성공",
+            user: user.nickname,
+          });
       });
     });
   } catch (err) {
@@ -142,13 +148,22 @@ userRouter.post("/kakaologin", async (req, res) => {
         expiresIn: "2h",
       }
     );
-    return res.status(200).json({
-      success: true,
-      kakaoAccessToken,
-      accessToken,
-      kakaoUserInfo,
-      msg: "로그인 성공",
-    });
+    return res
+      .status(200)
+      .cookie("accessToken", accessToken, {
+        maxAge: 2 * 60 * 60 * 1000,
+        httpOnly: true,
+      })
+      .cookie("kakaoAccessToken", kakaoAccessToken, {
+        maxAge: 2 * 60 * 60 * 1000,
+        httpOnly: true,
+      })
+      .json({
+        success: true,
+        kakaoUserInfo,
+        user: kakaoUserInfo.id,
+        msg: "로그인 성공",
+      });
   });
 });
 
@@ -169,14 +184,15 @@ userRouter.get("/auth", authMiddleware, (req, res) => {
 
 userRouter.get("/logout", authMiddleware, (req, res) => {
   try {
-    console.log(req.query.kakaoAccessToken);
-    if (req.query.kakaoAccessToken) {
+    if (req.cookies.kakaoAccessToken) {
+      res.clearCookie("kakaoAccessToken");
       axios.post("https://kapi.kakao.com/v1/user/unlink", null, {
         headers: {
-          Authorization: `Bearer ${req.query.kakaoAccessToken}`,
+          Authorization: `Bearer ${req.cookies.kakaoAccessToken}`,
         },
       });
     }
+    res.clearCookie("accessToken");
     return res.status(200).json({ success: true, msg: "로그아웃" });
   } catch (err) {
     return res
