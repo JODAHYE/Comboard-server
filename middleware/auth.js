@@ -3,6 +3,7 @@ import User from "../models/User.js";
 
 const authMiddleware = (req, res, next) => {
   try {
+    console.log("req.headers", req.cookies.accessToken);
     if (!req.cookies.accessToken) {
       return res
         .status(403)
