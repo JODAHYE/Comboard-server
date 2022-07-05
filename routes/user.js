@@ -83,7 +83,6 @@ userRouter.post("/login", (req, res) => {
           .status(200)
           .cookie("accessToken", accessToken, {
             maxAge: 2 * 60 * 60 * 1000,
-            domain: "comboard.netlify.app",
             httpOnly: true,
             secure: true,
           })
@@ -154,13 +153,11 @@ userRouter.post("/kakaologin", async (req, res) => {
       .status(200)
       .cookie("accessToken", accessToken, {
         maxAge: 2 * 60 * 60 * 1000,
-        domain: "comboard.netlify.app",
         httpOnly: true,
         secure: true,
       })
       .cookie("kakaoAccessToken", kakaoAccessToken, {
         maxAge: 2 * 60 * 60 * 1000,
-        domain: "comboard.netlify.app",
         httpOnly: true,
         secure: true,
       })
