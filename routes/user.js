@@ -102,75 +102,81 @@ userRouter.post("/login", (req, res) => {
 });
 
 userRouter.post("/kakaologin", async (req, res) => {
-  const param = qs.stringify({
-    grant_type: "authorization_code",
-    client_id: process.env.REST_API_KEY,
-    redirect_uri: process.env.REDIRECT_URL,
-    code: req.body.code,
-    client_secret: process.env.CLIENT_SECRET,
-  });
-  const kakaoTokenResponse = await axios.post(
-    "https://kauth.kakao.com/oauth/token",
-    param
-  );
-  const kakaoAccessToken = await kakaoTokenResponse.data.access_token;
-  const kakaoUserInfoResponse = await axios.get(
-    "https://kapi.kakao.com/v2/user/me",
-    {
-      headers: {
-        Authorization: `Bearer ${kakaoAccessToken}`,
-      },
-    }
-  );
-  const kakaoUserInfo = await kakaoUserInfoResponse.data;
-  const customEmail = kakaoUserInfo.id + "@kakaouser.com";
-  User.findOne({ email: customEmail }).exec((err, user) => {
-    if (err) return res.status(500).json({ success: false, err });
-    if (!user) {
-      bcrypt.genSalt(saltRounds, (err, salt) => {
-        bcrypt.hash(kakaoUserInfo.id, salt, (err, hash) => {
-          const newUser = new User({
-            email: customEmail,
-            nickname: kakaoUserInfo.properties.nickname,
-            password: hash,
-          });
-          newUser.save((err, user) => {
-            if (err) {
-              return res.status(500).json({ success: false, msg: err });
-            }
-          });
-        });
-      });
-    }
-    const accessToken = jwt.sign(
-      { email: customEmail },
-      process.env.SECRET_KEY,
+  try {
+    const param = qs.stringify({
+      grant_type: "authorization_code",
+      client_id: process.env.REST_API_KEY,
+      redirect_uri: process.env.REDIRECT_URL,
+      code: req.body.code,
+      client_secret: process.env.CLIENT_SECRET,
+    });
+    const kakaoTokenResponse = await axios.post(
+      "https://kauth.kakao.com/oauth/token",
+      param
+    );
+    const kakaoAccessToken = await kakaoTokenResponse.data.access_token;
+    const kakaoUserInfoResponse = await axios.get(
+      "https://kapi.kakao.com/v2/user/me",
       {
-        algorithm: "HS256",
-        expiresIn: "2h",
+        headers: {
+          Authorization: `Bearer ${kakaoAccessToken}`,
+        },
       }
     );
-    return res
-      .status(200)
-      .cookie("accessToken", accessToken, {
-        maxAge: 2 * 60 * 60 * 1000,
-        httpOnly: true,
-        sameSite: "none",
-        secure: true,
-      })
-      .cookie("kakaoAccessToken", kakaoAccessToken, {
-        maxAge: 2 * 60 * 60 * 1000,
-        httpOnly: true,
-        sameSite: "none",
-        secure: true,
-      })
-      .json({
-        success: true,
-        kakaoUserInfo,
-        user: kakaoUserInfo.id,
-        msg: "로그인 성공",
-      });
-  });
+    const kakaoUserInfo = await kakaoUserInfoResponse.data;
+    const customEmail = kakaoUserInfo.id + "@kakaouser.com";
+    User.findOne({ email: customEmail }).exec((err, user) => {
+      if (err) return res.status(500).json({ success: false, err });
+      if (!user) {
+        bcrypt.genSalt(saltRounds, (err, salt) => {
+          bcrypt.hash(kakaoUserInfo.id, salt, (err, hash) => {
+            const newUser = new User({
+              email: customEmail,
+              nickname: kakaoUserInfo.properties.nickname,
+              password: hash,
+            });
+            newUser.save((err, user) => {
+              if (err) {
+                return res.status(500).json({ success: false, msg: err });
+              }
+            });
+          });
+        });
+      }
+      const accessToken = jwt.sign(
+        { email: customEmail },
+        process.env.SECRET_KEY,
+        {
+          algorithm: "HS256",
+          expiresIn: "2h",
+        }
+      );
+      return res
+        .status(200)
+        .cookie("accessToken", accessToken, {
+          maxAge: 2 * 60 * 60 * 1000,
+          httpOnly: true,
+          sameSite: "none",
+          secure: true,
+        })
+        .cookie("kakaoAccessToken", kakaoAccessToken, {
+          maxAge: 2 * 60 * 60 * 1000,
+          httpOnly: true,
+          sameSite: "none",
+          secure: true,
+        })
+        .json({
+          success: true,
+          kakaoUserInfo,
+          user: kakaoUserInfo.id,
+          msg: "로그인 성공",
+        });
+    });
+  } catch (err) {
+    res
+      .status(500)
+      .json({ success: false, msg: `${err} 올바른 접근이 아닙니다.` });
+  }
 });
 
 userRouter.get("/auth", authMiddleware, (req, res) => {
