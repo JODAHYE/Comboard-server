@@ -84,6 +84,7 @@ userRouter.post("/login", (req, res) => {
           .cookie("accessToken", accessToken, {
             maxAge: 2 * 60 * 60 * 1000,
             httpOnly: true,
+            sameSite: "none",
             secure: true,
           })
           .json({
@@ -154,11 +155,13 @@ userRouter.post("/kakaologin", async (req, res) => {
       .cookie("accessToken", accessToken, {
         maxAge: 2 * 60 * 60 * 1000,
         httpOnly: true,
+        sameSite: "none",
         secure: true,
       })
       .cookie("kakaoAccessToken", kakaoAccessToken, {
         maxAge: 2 * 60 * 60 * 1000,
         httpOnly: true,
+        sameSite: "none",
         secure: true,
       })
       .json({
